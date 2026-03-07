@@ -1,0 +1,33 @@
+SELECT 
+  ?game 
+  ?gameLabel 
+  (SAMPLE(?genreLabel) AS ?genreLabel) 
+  (SAMPLE(?developerLabel) AS ?developerLabel) 
+  ?releaseYear
+  (MAX(?unitsSold) AS ?maxUnitsSold)
+WHERE {
+  ?game wdt:P31 wd:Q7889;          # Видеоигра
+        wdt:P136 ?genre;           # Жанр
+        wdt:P178 ?developer;       # Студия-разработчик
+        wdt:P400 wd:Q1406;         # Платформа Windows
+        wdt:P577 ?releaseDate.     # Дата выхода
+  
+  # Получаем количество проданных копий (если есть)
+  OPTIONAL {
+    ?game p:P2664 ?salesStatement.
+    ?salesStatement ps:P2664 ?unitsSold.
+  }
+  
+  SERVICE wikibase:label { 
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en,ru". 
+    ?genre rdfs:label ?genreLabel.
+    ?developer rdfs:label ?developerLabel.
+    ?game rdfs:label ?gameLabel.
+  }
+  
+  BIND(YEAR(?releaseDate) AS ?releaseYear)
+  FILTER(?releaseYear <= 2024)     # Только игры до 2024 года включительно
+}
+GROUP BY ?game ?gameLabel ?releaseYear
+ORDER BY DESC(?releaseYear)
+LIMIT 50
